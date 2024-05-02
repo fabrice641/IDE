@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-import virtualbox
 import threading
+import virtualbox
 
 # Funzione per creare e configurare la macchina virtuale
 def create_and_prepare_vm(vm_name, os_type_id, disk_path, disk_size_mb, iso_path, progress_var):
@@ -39,7 +39,7 @@ def create_and_prepare_vm(vm_name, os_type_id, disk_path, disk_size_mb, iso_path
         # Monitora il progresso del processo di avvio
         while not progress.completed:
             progress_var.set(progress.percent)
-            threading.Event().wait(1)  # Usa threading.Event().wait(1) per evitare di bloccare il thread
+            threading.Event().wait(1)
             
         # Controlla se l'avvio è stato completato con successo
         if progress.completed and progress.result_code == virtualbox.library.VBoxErrorCode.vbox_e_success:
@@ -47,16 +47,16 @@ def create_and_prepare_vm(vm_name, os_type_id, disk_path, disk_size_mb, iso_path
         else:
             error_message = f"Errore durante la creazione della macchina virtuale '{vm_name}': {progress.error_info.text}"
             messagebox.showerror("Errore", error_message)
-            print(error_message)  # Stampa l'errore nella console per ulteriore debugging
+            print(error_message)
     
     except virtualbox.library.VBoxError as vbox_error:
         error_message = f"Errore di VirtualBox: {str(vbox_error)}"
         messagebox.showerror("Errore", error_message)
-        print(error_message)  # Stampa l'errore nella console per ulteriore debugging
+        print(error_message)
     except Exception as e:
         error_message = f"Errore durante l'operazione: {str(e)}"
         messagebox.showerror("Errore", error_message)
-        print(error_message)  # Stampa l'errore nella console per ulteriore debugging
+        print(error_message)
 
 # Funzione per gestire l'evento di clic del pulsante
 def on_create_vm_button_clicked(entries, progress_var):
@@ -69,7 +69,7 @@ def on_create_vm_button_clicked(entries, progress_var):
         iso_path = entries['iso_path'].get()
         
         # Verifica se tutti i valori sono presenti
-        if not vm_name or not os_type_id o non disk_path o non iso_path o non disk_size_mb:
+        if not (vm_name and os_type_id and disk_path and iso_path and disk_size_mb):
             messagebox.showerror("Errore", "Per favore, completa tutti i campi richiesti.")
             return
         
@@ -86,7 +86,7 @@ def main():
     # Crea la finestra principale
     window = tk.Tk()
     window.title("Creazione Macchina Virtuale")
-    window.geometry("400x300")
+    window.geometry("400x350")
 
     # Crea un dizionario per memorizzare gli entry
     entries = {}
@@ -103,8 +103,8 @@ def main():
         if key == "iso_path":
             # Utilizza un filedialog per scegliere il file ISO
             def select_iso_path():
-                iso_path = filedialog.askopenfilename(filetypes=[("ISO files", "*.iso")])
-                entries[key].delete(0, tk.END)  # Cancella eventuali dati esistenti
+                iso_path = filedialog.askopenfilename(filetypes=[("File ISO", "*.iso")])
+                entries[key].delete(0, tk.END)
                 entries[key].insert(0, iso_path)
 
             entry = tk.Entry(window)
