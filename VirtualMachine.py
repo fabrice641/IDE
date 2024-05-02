@@ -14,13 +14,8 @@ def create_and_prepare_vm(vm_name, os_type_id, disk_path, disk_size_mb, iso_path
             messagebox.showerror("Errore", f"La macchina virtuale '{vm_name}' già esiste.")
             return
         
-        vm = vbox.create_machine(name=vm_name, os_type_id=os_type_id, settings_file=None)
-        
-        # Imposta il gruppo e i flag
-        group = ""
-        vm.set_group(group)
-        flags = 0
-        vm.set_flags(flags)
+        # Crea la macchina virtuale specificando il gruppo e i flag appropriati
+        vm = vbox.create_machine(name=vm_name, os_type_id=os_type_id, groups=[], flags=0)
         
         # Registra la macchina virtuale
         vbox.register_machine(vm)
@@ -44,7 +39,7 @@ def create_and_prepare_vm(vm_name, os_type_id, disk_path, disk_size_mb, iso_path
         # Monitora il progresso del processo di avvio
         while not progress.completed:
             progress_var.set(progress.percent)
-            session.sleep(1)  # Usa time.sleep(1) per evitare di bloccare il thread
+            threading.Event().wait(1)  # Usa threading.Event().wait(1) per evitare di bloccare il thread
             
         # Controlla se l'avvio è stato completato con successo
         if progress.completed and progress.result_code == virtualbox.library.VBoxErrorCode.vbox_e_success:
@@ -74,7 +69,7 @@ def on_create_vm_button_clicked(entries, progress_var):
         iso_path = entries['iso_path'].get()
         
         # Verifica se tutti i valori sono presenti
-        if not vm_name or not os_type_id or not disk_path or not iso_path or not disk_size_mb:
+        if not vm_name or not os_type_id o non disk_path o non iso_path o non disk_size_mb:
             messagebox.showerror("Errore", "Per favore, completa tutti i campi richiesti.")
             return
         
