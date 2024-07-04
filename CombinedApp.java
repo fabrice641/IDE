@@ -31,6 +31,7 @@ public class CombinedApp extends JFrame implements HyperlinkListener {
     public CombinedApp() {
         setTitle("Combined Application");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setIconImage(new ImageIcon(getClass().getResource("/app_icon.png")).getImage());
 
         // Create Tabbed Pane
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -52,7 +53,7 @@ public class CombinedApp extends JFrame implements HyperlinkListener {
 
     private void setupWebBrowser(JPanel panel) {
         JPanel bttnPanel = new JPanel();
-        bttnPanel.setBackground(Color.WHITE);
+        bttnPanel.setBackground(Color.LIGHT_GRAY);
         buttonBack.addActionListener(e -> backAction());
         buttonBack.setEnabled(false);
         bttnPanel.add(buttonBack);
@@ -153,7 +154,15 @@ public class CombinedApp extends JFrame implements HyperlinkListener {
                 Thread.sleep(30); // Simulate progress
                 progressBar.setValue(i);
             }
-            updateStatusLabel("Bootable USB created successfully.");
+            // Simulate mounting and starting installation
+            updateStatusLabel("Mounting ISO...");
+            Thread.sleep(1000); // Simulate mounting delay
+            updateStatusLabel("Starting OS installation...");
+            Thread.sleep(2000); // Simulate installation start delay
+
+            // Show success dialog
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "Bootable USB created and OS installation started successfully.", "Success", JOptionPane.INFORMATION_MESSAGE));
+            updateStatusLabel("Bootable USB created and OS installation started.");
         } catch (Exception e) {
             e.printStackTrace();
             updateStatusLabel("Failed to create bootable USB.");
