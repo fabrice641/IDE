@@ -1,136 +1,230 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Desktop;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenuBar;
-import javax.swing.JOptionPane;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.text.html.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.net.*;
+import java.sql.*;
+import java.util.*;
 
-public class Os {
+public class CombinedApp extends JFrame implements HyperlinkListener {
 
-    public static JFrame os;
-    public static JMenuBar menu;
-    public static JFileChooser fileChooser;
-    public static JButton homeButton;
-    public static JButton aboutButton;
-    public static JButton whereButton;
-    public static JButton contactButton;
-    public static JButton isoButton;
-    public static JLabel statusLabel;
+    // Components for Web Browser
+    private JButton buttonBack = new JButton("<");
+    private JButton buttonForward = new JButton(">");
+    private JTextField locationTextField = new JTextField(35);
+    private JEditorPane displayEditorPane = new JEditorPane();
+    private ArrayList<String> pageList = new ArrayList<>();
 
-    public static void main(String[] args) {
+    // Components for OS Installer
+    private JFileChooser fileChooser;
+    private JButton isoButton = new JButton("OPEN ISO");
+    private JLabel statusLabel = new JLabel("Status: Idle");
 
-        // Creazione del JFrame
-        os = new JFrame("OS INSTALLER");
-        os.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        os.setSize(1000, 1000);
-        os.setLayout(new FlowLayout(30));
+    // Common Components
+    private JTextField emailField = new JTextField(20);
+    private JPasswordField emailPasswordField = new JPasswordField(20);
 
-        // Creazione e configurazione della JMenuBar
-        menu = new JMenuBar();
-        menu.setBackground(Color.BLACK);
-        os.setJMenuBar(menu); // Aggiunta della JMenuBar al JFrame
+    public CombinedApp() {
+        setTitle("Combined Application");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Creazione e configurazione dei bottoni
-        homeButton = new JButton("HOME");
-        homeButton.setBackground(Color.WHITE);
-        os.add(homeButton, BorderLayout.NORTH); // Aggiunta del bottone Home in alto
+        // Create Tabbed Pane
+        JTabbedPane tabbedPane = new JTabbedPane();
 
-        aboutButton = new JButton("CHI SIAMO");
-        aboutButton.setBackground(Color.WHITE);
-        aboutButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(os, "Sono Fabris Vulpio e sono un programmatore Java. Questo è il mio software per montare e rendere eseguibile un sistema operativo su chiavetta USB.");
-            }
-        });
-        os.add(aboutButton, BorderLayout.SOUTH); // Aggiunta del bottone Chi Siamo in basso
+        // Web Browser Tab
+        JPanel browserPanel = new JPanel(new BorderLayout());
+        setupWebBrowser(browserPanel);
+        tabbedPane.addTab("Web Browser", browserPanel);
 
-        whereButton = new JButton("DOVE SIAMO");
-        whereButton.setBackground(Color.WHITE);
-        whereButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(os, "Siamo a Bari, via Colonnello De Cristoforis 8, Spazio 13.");
-            }
-        });
-        os.add(whereButton, BorderLayout.NORTH); // Aggiunta del bottone Dove Siamo a sinistra
+        // OS Installer Tab
+        JPanel osPanel = new JPanel(new BorderLayout());
+        setupOSInstaller(osPanel);
+        tabbedPane.addTab("OS Installer", osPanel);
 
-        contactButton = new JButton("CONTATTI");
-        contactButton.setBackground(Color.WHITE);
-        contactButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    URI uri = new URI("https://api.whatsapp.com/send?phone=+39 3471462385&text=Siamo a a Bari, Via Colonnello de Cristoforis 8, Spazio 13");
-                    Desktop.getDesktop().browse(uri);
-                } catch (URISyntaxException | IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-        os.add(contactButton, BorderLayout.NORTH); // Aggiunta del bottone Contatti a destra
-
-        // Creazione e configurazione del bottone per aprire il file .iso
-        isoButton = new JButton("OPEN ISO");
-        isoButton.setBackground(Color.WHITE);
-        isoButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                int result = fileChooser.showOpenDialog(null);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File isoFile = fileChooser.getSelectedFile();
-                    JFileChooser usbChooser = new JFileChooser();
-                    usbChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                    int usbResult = usbChooser.showOpenDialog(null);
-                    if (usbResult == JFileChooser.APPROVE_OPTION) {
-                        File usbDrive = usbChooser.getSelectedFile();
-                        try {
-                            updateStatusLabel("Creating bootable USB...");
-                            createBootableUSB(isoFile, usbDrive);
-                            updateStatusLabel("Bootable USB created successfully.");
-                        } catch (IOException ex) {
-                            updateStatusLabel("Error: " + ex.getMessage());
-                            ex.printStackTrace();
-                        }
-                    }
-                }
-            }
-        });
-        menu.add(isoButton); // Aggiunta del bottone ISO alla JMenuBar
-
-        // Creazione e configurazione del JLabel per mostrare lo stato
-        statusLabel = new JLabel("Status: Idle");
-        os.add(statusLabel, BorderLayout.CENTER); // Aggiunta del JLabel al centro
-
-        // Visualizzazione del JFrame
-        os.setVisible(true);
+        getContentPane().add(tabbedPane);
+        pack();
+        setLocationRelativeTo(null); // Center window on screen
     }
 
-    private static void createBootableUSB(File isoFile, File usbDrive) throws IOException {
-        // Costruzione del comando per creare l'unità avviabile
-        String command = String.format("dd if=%s of=%s bs=4M status=progress", isoFile.getAbsolutePath(), usbDrive.getAbsolutePath());
+    private void setupWebBrowser(JPanel panel) {
+        JPanel bttnPanel = new JPanel();
+        bttnPanel.setBackground(Color.WHITE);
+        buttonBack.addActionListener(e -> backAction());
+        buttonBack.setEnabled(false);
+        bttnPanel.add(buttonBack);
+        buttonForward.addActionListener(e -> forwardAction());
+        buttonForward.setEnabled(false);
+        bttnPanel.add(buttonForward);
 
+        locationTextField.addKeyListener(new KeyAdapter() {
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    actionGo();
+                }
+            }
+        });
+        locationTextField.setFont(new Font("Arial", Font.PLAIN, 14));
+        bttnPanel.add(locationTextField);
+        JButton bttnGo = new JButton("GO");
+        bttnGo.addActionListener(e -> actionGo());
+        bttnGo.setFont(new Font("Arial", Font.PLAIN, 14));
+        bttnPanel.add(bttnGo);
+
+        displayEditorPane.setContentType("text/html");
+        displayEditorPane.setEditable(false);
+        displayEditorPane.addHyperlinkListener(this);
+
+        JScrollPane scrollPane = new JScrollPane(displayEditorPane);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        panel.add(bttnPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        // Initialize browser with a default page
         try {
-            Process process = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", command});
-            process.waitFor();
-        } catch (InterruptedException | IOException ex) {
-            throw new IOException("Failed to create bootable USB", ex);
+            URL defaultUrl = new URL("https://www.google.com");
+            showPage(defaultUrl, true);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private static void updateStatusLabel(String text) {
+    private void setupOSInstaller(JPanel panel) {
+        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 30, 30));
+        isoButton.setBackground(Color.WHITE);
+        isoButton.addActionListener(e -> openIsoFile());
+        panel.add(isoButton);
+        panel.add(statusLabel);
+    }
+
+    private void openIsoFile() {
+        fileChooser = new JFileChooser();
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int result = fileChooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File isoFile = fileChooser.getSelectedFile();
+            // Simulate installation process for demonstration
+            updateStatusLabel("Creating bootable USB...");
+            try {
+                Thread.sleep(3000); // Simulate process
+                updateStatusLabel("Bootable USB created successfully.");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void backAction() {
+        try {
+            URL currentUrl = displayEditorPane.getPage();
+            int pageIndex = pageList.indexOf(currentUrl.toString());
+            if (pageIndex > 0) {
+                showPage(new URL(pageList.get(pageIndex - 1)), false);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void forwardAction() {
+        try {
+            URL currentUrl = displayEditorPane.getPage();
+            int pageIndex = pageList.indexOf(currentUrl.toString());
+            if (pageIndex < pageList.size() - 1) {
+                showPage(new URL(pageList.get(pageIndex + 1)), false);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void actionGo() {
+        URL verifiedUrl = verifyUrl(locationTextField.getText());
+        if (verifiedUrl != null) {
+            showPage(verifiedUrl, true);
+        } else {
+            System.out.println("Invalid URL");
+        }
+    }
+
+    private URL verifyUrl(String url) {
+        if (!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://")) {
+            return null;
+        }
+        try {
+            return new URL(url);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void showPage(URL pageUrl, boolean addToList) {
+        try {
+            URLConnection connection = pageUrl.openConnection();
+            connection.connect();
+
+            InputStream input = connection.getInputStream();
+            BufferedInputStream bis = new BufferedInputStream(input);
+            StringBuilder builder = new StringBuilder();
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = bis.read(buffer, 0, 1024)) != -1) {
+                builder.append(new String(buffer, 0, bytesRead));
+            }
+
+            displayEditorPane.setText(builder.toString());
+            bis.close();
+
+            if (addToList) {
+                int listSize = pageList.size();
+                if (listSize > 0) {
+                    int pageIndex = pageList.indexOf(pageUrl.toString());
+                    for (int i = listSize - 1; i > pageIndex; i--) {
+                        pageList.remove(i);
+                    }
+                }
+                pageList.add(pageUrl.toString());
+            }
+
+            locationTextField.setText(pageUrl.toString());
+            updateButtons();
+        } catch (Exception e) {
+            System.out.println("Unable to load page: " + e.getMessage());
+        }
+    }
+
+    private void updateButtons() {
+        buttonBack.setEnabled(pageList.size() > 1);
+        buttonForward.setEnabled(pageList.size() > 1);
+    }
+
+    public void hyperlinkUpdate(HyperlinkEvent event) {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            if (event instanceof HTMLFrameHyperlinkEvent) {
+                HTMLFrameHyperlinkEvent linkEvent = (HTMLFrameHyperlinkEvent) event;
+                HTMLDocument document = (HTMLDocument) displayEditorPane.getDocument();
+                document.processHTMLFrameHyperlinkEvent(linkEvent);
+            } else {
+                showPage(event.getURL(), true);
+            }
+        }
+    }
+
+    private void updateStatusLabel(String text) {
         statusLabel.setText("Status: " + text);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            CombinedApp app = new CombinedApp();
+            app.setVisible(true);
+        });
     }
 }
