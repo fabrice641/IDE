@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.net.Socket;
 import java.sql.*;
 
 public class SOSIDE extends JFrame {
@@ -42,6 +43,7 @@ public class SOSIDE extends JFrame {
         JButton runButton = new JButton("Run");
         JButton debugButton = new JButton("Debug");
         JButton generateExecutableButton = new JButton("Generate Executable");
+        JButton connectToServerButton = new JButton("Connect to Server"); // New button for server connection
 
         toolBar.add(openFileButton);
         toolBar.add(connectDBButton);
@@ -55,6 +57,7 @@ public class SOSIDE extends JFrame {
         toolBar.add(runButton);
         toolBar.add(debugButton);
         toolBar.add(generateExecutableButton);
+        toolBar.add(connectToServerButton); // Add the connect to server button
 
         // Panels for query and output areas
         queryArea = new JTextArea(10, 80);
@@ -84,6 +87,7 @@ public class SOSIDE extends JFrame {
         runButton.addActionListener(new RunAction());
         debugButton.addActionListener(new DebugAction());
         generateExecutableButton.addActionListener(new GenerateExecutableAction());
+        connectToServerButton.addActionListener(new ConnectToServerAction()); // ActionListener for connect to server button
 
         loadRecentFile();
     }
@@ -297,6 +301,22 @@ public class SOSIDE extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             outputArea.setText("Generate executable functionality not implemented yet.");
+        }
+    }
+
+    private class ConnectToServerAction implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String serverAddress = "127.0.0.1";
+            int serverPort = 8080;
+
+            try {
+                Socket socket = new Socket(serverAddress, serverPort);
+                outputArea.setText("Connected to server at " + serverAddress + ":" + serverPort);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                outputArea.setText("Failed to connect to server: " + ex.getMessage());
+            }
         }
     }
 
